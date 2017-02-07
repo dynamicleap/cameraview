@@ -345,8 +345,12 @@ class Camera2 extends CameraViewImpl {
             int internalFacing = INTERNAL_FACINGS.get(mFacing);
             final String[] ids = mCameraManager.getCameraIdList();
             if (ids.length == 0) { // No camera
-                throw new RuntimeException("No camera available.");
+                mCameraId = null;
+                Log.e(TAG, "No camera devices present.");
+                mCallback.onCameraNotAvailable();
+                return false;
             }
+
             for (String id : ids) {
                 CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(id);
                 Integer level = characteristics.get(
@@ -434,9 +438,13 @@ class Camera2 extends CameraViewImpl {
      * <p>The result will be processed in {@link #mCameraDeviceCallback}.</p>
      */
     private void startOpeningCamera() {
+        if (mCameraId == null) {
+            return;
+        }
+
         try {
             mCameraManager.openCamera(mCameraId, mCameraDeviceCallback, null);
-        } catch (CameraAccessException e) {
+        } catch (SecurityException|CameraAccessException e) {
             throw new RuntimeException("Failed to open camera: " + mCameraId, e);
         }
     }
