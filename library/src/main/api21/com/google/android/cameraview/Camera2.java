@@ -650,6 +650,7 @@ class Camera2 extends CameraViewImpl {
      * capturing a still picture.
      */
     void unlockFocus() {
+        if (!isCameraOpened()) return;
         mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
         try {
