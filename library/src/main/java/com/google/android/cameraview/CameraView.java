@@ -96,13 +96,14 @@ public class CameraView extends FrameLayout {
         }
         // Internal setup
         final PreviewImpl preview = createPreviewImpl(context);
-        mCallbacks = new CallbackBridge();
+        mCallbacks = new CallbackBridge(this);
+        final Context appContext = context.getApplicationContext();
         if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(mCallbacks, preview);
         } else if (Build.VERSION.SDK_INT < 23) {
-            mImpl = new Camera2(mCallbacks, preview, context);
+            mImpl = new Camera2(mCallbacks, preview, appContext);
         } else {
-            mImpl = new Camera2Api23(mCallbacks, preview, context);
+            mImpl = new Camera2Api23(mCallbacks, preview, appContext);
         }
         // Attributes
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView, defStyleAttr,
@@ -152,6 +153,7 @@ public class CameraView extends FrameLayout {
             mDisplayOrientationDetector.disable();
         }
         super.onDetachedFromWindow();
+        mCallbacks.cleanup();
     }
 
     @Override
@@ -410,13 +412,14 @@ public class CameraView extends FrameLayout {
         mImpl.takePicture();
     }
 
-    private class CallbackBridge implements CameraViewImpl.Callback {
+    private static class CallbackBridge implements CameraViewImpl.Callback {
 
         private final ArrayList<Callback> mCallbacks = new ArrayList<>();
-
+        private CameraView cameraView;
         private boolean mRequestLayoutOnOpen;
 
-        CallbackBridge() {
+        CallbackBridge(CameraView cameraView) {
+            this.cameraView = cameraView;
         }
 
         public void add(Callback callback) {
@@ -431,29 +434,34 @@ public class CameraView extends FrameLayout {
         public void onCameraOpened() {
             if (mRequestLayoutOnOpen) {
                 mRequestLayoutOnOpen = false;
-                requestLayout();
+                cameraView.requestLayout();
             }
             for (Callback callback : mCallbacks) {
-                callback.onCameraOpened(CameraView.this);
+                callback.onCameraOpened(cameraView);
             }
         }
 
         @Override
         public void onCameraClosed() {
             for (Callback callback : mCallbacks) {
-                callback.onCameraClosed(CameraView.this);
+                callback.onCameraClosed(cameraView);
             }
         }
 
         @Override
         public void onPictureTaken(byte[] data) {
             for (Callback callback : mCallbacks) {
-                callback.onPictureTaken(CameraView.this, data);
+                callback.onPictureTaken(cameraView, data);
             }
         }
 
         public void reserveRequestLayoutOnOpen() {
             mRequestLayoutOnOpen = true;
+        }
+
+        private void cleanup() {
+            cameraView = null;
+            mCallbacks.clear();
         }
     }
 
