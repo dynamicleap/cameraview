@@ -263,7 +263,9 @@ public class CameraView extends FrameLayout {
      * {@link Activity#onPause()}.
      */
     public void stop() {
+        if (mImpl == null) return;
         mImpl.stop();
+        mImpl = null;
     }
 
     /**
@@ -460,6 +462,7 @@ public class CameraView extends FrameLayout {
         }
 
         private void cleanup() {
+            cameraView.stop();
             cameraView = null;
             mCallbacks.clear();
         }
