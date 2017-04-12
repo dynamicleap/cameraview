@@ -265,7 +265,6 @@ public class CameraView extends FrameLayout {
     public void stop() {
         if (mImpl == null) return;
         mImpl.stop();
-        mImpl = null;
     }
 
     /**
